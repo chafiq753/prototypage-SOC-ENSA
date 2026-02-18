@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOC ENSA – Plateforme Universitaire</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#050A14; --sidebar-w:230px;
+    --purple:#7C5CFC; --purple-light:#A78BFA; --purple-dim:rgba(124,92,252,0.15);
+    --cyan:#22D3EE; --green:#10B981; --red:#EF4444; --orange:#F59E0B;
+    --text:#E2E8F0; --muted:#64748B; --muted2:#1E293B;
+    --card:rgba(255,255,255,0.028); --card-border:rgba(255,255,255,0.07);
+    --font:'Space Grotesk',sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;display:flex;}
+
+  /* ── SIDEBAR ── */
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);z-index:200;background:rgba(5,10,20,0.97);backdrop-filter:blur(16px);border-right:1px solid var(--card-border);display:flex;flex-direction:column;}
+  .sb-brand{display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid var(--card-border);}
+  .sb-shield{width:38px;height:38px;flex-shrink:0;background:linear-gradient(135deg,var(--purple),#4F46E5);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .sb-brand-text span{display:block;font-weight:700;font-size:13.5px;}
+  .sb-brand-text small{font-size:9px;color:var(--muted);letter-spacing:1.4px;text-transform:uppercase;}
+  .sb-section{padding:14px 16px 5px;font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;}
+  .sb-link{display:flex;align-items:center;gap:10px;padding:9px 14px;margin:1px 8px;border-radius:10px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .18s;border:1px solid transparent;text-decoration:none;}
+  .sb-link .icon{font-size:15px;width:20px;text-align:center;}
+  .sb-link:hover{color:var(--text);background:rgba(255,255,255,0.04);}
+  .sb-link.active{color:var(--purple-light);background:var(--purple-dim);border-color:rgba(124,92,252,0.28);}
+  .sb-link .bc{margin-left:auto;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(239,68,68,0.2);color:#F87171;font-family:var(--mono);}
+  .sb-link .bc.g{background:rgba(245,158,11,0.2);color:#FCD34D;}
+  .sb-divider{height:1px;background:var(--card-border);margin:8px 12px;}
+  .sb-bottom{margin-top:auto;padding:12px;border-top:1px solid var(--card-border);}
+  .sb-status{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.15);}
+  .sb-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;flex-shrink:0;}
+  .sb-st{font-size:11px;color:var(--green);font-weight:600;}
+  .sb-ss{font-size:10px;color:var(--muted);}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+  @keyframes ripple{0%{transform:scale(1);opacity:.45}100%{transform:scale(2.5);opacity:0}}
+
+  /* ── TOPBAR ── */
+  .topbar{position:fixed;top:0;left:var(--sidebar-w);right:0;height:56px;z-index:100;background:rgba(5,10,20,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;}
+  .topbar-title{font-size:15px;font-weight:700;}
+  .topbar-right{display:flex;align-items:center;gap:12px;}
+  .topbar-clock{font-family:var(--mono);font-size:12px;color:var(--purple-light);}
+  .tb-btn{position:relative;height:34px;padding:0 14px;border-radius:9px;background:var(--card);border:1px solid var(--card-border);display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text);transition:all .2s;font-family:var(--font);}
+  .tb-btn:hover{border-color:rgba(124,92,252,0.4);color:var(--purple-light);}
+  .tb-btn.export{background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);color:var(--green);}
+  .tb-btn.export:hover{background:rgba(16,185,129,0.2);}
+  .notif-badge{position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--red);font-size:9px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);}
+  .topbar-avatar{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--purple),#4F46E5);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;}
+
+  /* ── MAIN ── */
+  .main{margin-left:var(--sidebar-w);padding-top:56px;flex:1;}
+  .page{display:none;}.page.active{display:block;}
+  .container{padding:24px 28px 70px;max-width:1320px;}
+
+  /* ── BG ── */
+  .grid-bg{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(124,92,252,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(124,92,252,0.035) 1px,transparent 1px);background-size:40px 40px;}
+  .glow{position:fixed;border-radius:50%;filter:blur(130px);pointer-events:none;z-index:0;}
+  .glow-1{width:700px;height:700px;background:rgba(124,92,252,0.07);top:-200px;left:30%;}
+  .glow-2{width:400px;height:400px;background:rgba(34,211,238,0.04);bottom:5%;right:5%;}
+
+  /* ── COMMON ── */
+  .page-header{margin-bottom:22px;position:relative;z-index:1;}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;border:1px solid;margin-bottom:8px;}
+  .badge-purple{color:var(--purple-light);border-color:rgba(124,92,252,0.4);background:var(--purple-dim);}
+  .badge-red{color:var(--red);border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.1);}
+  .badge-green{color:var(--green);border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.1);}
+  .page-header h1{font-size:20px;font-weight:700;}
+  .page-header p{font-size:12px;color:var(--muted);margin-top:3px;}
+  .card{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:18px;backdrop-filter:blur(8px);transition:border-color .2s;position:relative;z-index:1;}
+  .card:hover{border-color:rgba(124,92,252,0.22);}
+  .card-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.1px;margin-bottom:14px;}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;position:relative;z-index:1;}
+  .stat-card{padding:18px 20px;}
+  .stat-icon{font-size:18px;margin-bottom:10px;}
+  .stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+  .stat-value{font-size:26px;font-weight:700;font-family:var(--mono);line-height:1;}
+  .stat-bar-bg{height:4px;border-radius:2px;background:rgba(255,255,255,0.07);margin-top:12px;}
+  .stat-bar-fill{height:4px;border-radius:2px;}
+  .stat-sub{font-size:11px;color:var(--muted);margin-top:8px;}
+  .up{color:var(--green);font-weight:600;}.dn{color:var(--red);font-weight:600;}
+  .g21{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px;position:relative;z-index:1;}
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;position:relative;z-index:1;}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;position:relative;z-index:1;}
+  canvas{width:100%!important;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{text-align:left;padding:9px 12px;font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.9px;border-bottom:1px solid var(--card-border);}
+  td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(255,255,255,0.018);}
+  .sev{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:5px;font-size:10px;font-weight:700;}
+  .sc{background:rgba(239,68,68,0.15);color:#F87171;}
+  .sh{background:rgba(245,158,11,0.15);color:#FCD34D;}
+  .sm{background:rgba(124,92,252,0.15);color:var(--purple-light);}
+  .sl{background:rgba(16,185,129,0.15);color:#6EE7B7;}
+  .si{background:rgba(34,211,238,0.1);color:var(--cyan);}
+  .log-toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .search-box{flex:1;min-width:200px;background:rgba(255,255,255,0.04);border:1px solid var(--card-border);border-radius:9px;padding:8px 13px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;}
+  .search-box:focus{border-color:rgba(124,92,252,0.5);}
+  .filter-btn{padding:8px 14px;border-radius:9px;border:1px solid var(--card-border);background:var(--card);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:all .18s;font-family:var(--font);}
+  .filter-btn:hover,.filter-btn.active{background:var(--purple-dim);border-color:rgba(124,92,252,0.4);color:var(--purple-light);}
+  .log-entry{display:grid;grid-template-columns:148px 90px 1fr 140px;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.03);font-family:var(--mono);font-size:11px;align-items:center;transition:background .15s;}
+  .log-entry:hover{background:rgba(255,255,255,0.018);}
+  .log-time{color:var(--muted);}.log-msg{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .log-src{color:var(--cyan);text-align:right;font-size:10px;}
+  .log-header{color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;background:rgba(255,255,255,0.02);}
+  .prog-item{margin-bottom:13px;}
+  .prog-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+  .prog-bg{height:6px;border-radius:3px;background:rgba(255,255,255,0.06);}
+  .prog-fill{height:6px;border-radius:3px;}
+  .alert-card{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:15px 18px;margin-bottom:10px;display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;transition:all .2s;cursor:pointer;position:relative;z-index:1;}
+  .alert-card:hover{border-color:rgba(124,92,252,0.3);transform:translateX(2px);}
+  .alert-card.critical{border-left:3px solid var(--red);}
+  .alert-card.high{border-left:3px solid var(--orange);}
+  .alert-card.medium{border-left:3px solid var(--purple);}
+  .alert-card.low{border-left:3px solid var(--green);}
+  .alert-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .alert-icon.critical{background:rgba(239,68,68,0.12);}
+  .alert-icon.high{background:rgba(245,158,11,0.12);}
+  .alert-icon.medium{background:rgba(124,92,252,0.12);}
+  .alert-icon.low{background:rgba(16,185,129,0.12);}
+  .alert-title{font-size:13px;font-weight:600;margin-bottom:3px;}
+  .alert-desc{font-size:11px;color:var(--muted);}
+  .alert-time{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap;}
+  .alert-action{padding:6px 12px;border-radius:7px;border:1px solid var(--card-border);background:transparent;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--font);}
+  .alert-action:hover{background:var(--purple-dim);border-color:rgba(124,92,252,0.4);color:var(--purple-light);}
+  .timeline{position:relative;padding-left:22px;}
+  .timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:1px;background:var(--card-border);}
+  .tl-item{position:relative;margin-bottom:14px;}
+  .tl-dot{position:absolute;left:-19px;top:4px;width:9px;height:9px;border-radius:50%;border:2px solid;}
+  .tl-dot.red{background:rgba(239,68,68,0.3);border-color:var(--red);}
+  .tl-dot.orange{background:rgba(245,158,11,0.3);border-color:var(--orange);}
+  .tl-dot.purple{background:var(--purple-dim);border-color:var(--purple);}
+  .tl-dot.green{background:rgba(16,185,129,0.2);border-color:var(--green);}
+  .tl-title{font-size:12px;font-weight:600;margin-bottom:2px;}
+  .tl-time{font-size:10px;color:var(--muted);font-family:var(--mono);}
+  ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--muted2);border-radius:3px;}
+
+  /* ── EXPORT PANEL ── */
+  .export-panel{background:var(--card);border:1px solid rgba(16,185,129,0.25);border-radius:14px;padding:24px;margin-bottom:20px;position:relative;z-index:1;}
+  .export-panel-title{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+  .export-panel-sub{font-size:12px;color:var(--muted);margin-bottom:20px;}
+  .export-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+  .export-item{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:6px;}
+  .export-item:hover{border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.05);}
+  .export-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--green);cursor:pointer;}
+  .export-item-header{display:flex;align-items:center;justify-content:space-between;}
+  .export-item-name{font-size:13px;font-weight:600;}
+  .export-item-desc{font-size:11px;color:var(--muted);}
+  .export-item-count{font-family:var(--mono);font-size:10px;color:var(--cyan);}
+  .export-options{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px;}
+  .export-options label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+  .export-options select,.export-options input[type=date]{background:rgba(255,255,255,0.04);border:1px solid var(--card-border);border-radius:8px;padding:7px 12px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;}
+  .export-options select:focus,.export-options input[type=date]:focus{border-color:rgba(124,92,252,0.5);}
+  .export-actions{display:flex;gap:10px;align-items:center;}
+  .btn-export{padding:10px 22px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--green),#059669);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s;display:flex;align-items:center;gap:8px;}
+  .btn-export:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(16,185,129,0.25);}
+  .btn-export:active{transform:translateY(0);}
+  .btn-preview{padding:10px 18px;border-radius:10px;border:1px solid var(--card-border);background:var(--card);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .2s;}
+  .btn-preview:hover{border-color:rgba(124,92,252,0.4);color:var(--purple-light);}
+  .export-log{background:rgba(0,0,0,0.3);border:1px solid var(--card-border);border-radius:10px;padding:14px;font-family:var(--mono);font-size:11px;max-height:140px;overflow-y:auto;color:var(--muted);}
+  .export-log .ok{color:var(--green);}
+  .export-log .info{color:var(--cyan);}
+  .export-log .warn{color:var(--orange);}
+  .toast{position:fixed;bottom:30px;right:30px;z-index:9999;padding:14px 20px;border-radius:12px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:var(--green);font-size:13px;font-weight:600;display:none;align-items:center;gap:10px;backdrop-filter:blur(12px);}
+  .toast.show{display:flex;animation:slideIn .3s ease;}
+  @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ <span id="toast-msg">Export réussi !</span></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-shield">🎓</div>
+    <div class="sb-brand-text">
+      <span>SOC – ENSA</span>
+      <small>Plateforme Universitaire</small>
+    </div>
+  </div>
+  <div class="sb-section">Navigation</div>
+  <a class="sb-link active" onclick="showPage('dashboard',this)"><span class="icon">📊</span> Dashboard</a>
+  <a class="sb-link" onclick="showPage('logs',this)"><span class="icon">📋</span> Visualisation Logs <span class="bc g">2.4M</span></a>
+  <a class="sb-link" onclick="showPage('alerts',this)"><span class="icon">🚨</span> Alertes <span class="bc">43</span></a>
+  <a class="sb-link" onclick="showPage('export',this)"><span class="icon">📤</span> Export CSV</a>
+
+  <div class="sb-bottom">
+    <div class="sb-status">
+      <div class="sb-dot"></div>
+      <div><div class="sb-st">Système Opérationnel</div><div class="sb-ss">v2.4.1 · Campus ENSA</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-title" id="topbar-title">Dashboard – Vue d'ensemble ENSA</div>
+  <div class="topbar-right">
+    <div class="topbar-clock" id="clock"></div>
+    <button class="tb-btn export" onclick="showPage('export', document.querySelector('.sb-link:nth-child(5)'))">📤 Export CSV</button>
+    <div class="tb-btn" style="position:relative;">🔔<div class="notif-badge">7</div></div>
+    <div class="topbar-avatar">👤</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ════════════════════════════════
+     PAGE 1 – DASHBOARD
+════════════════════════════════ -->
+<div class="page active" id="page-dashboard">
+<div class="container">
+  <div class="page-header">
+    <div class="badge badge-purple">● PLATEFORME ENSA OPÉRATIONNELLE</div>
+    <h1>Dashboard – Sécurité Plateforme Universitaire</h1>
+    <p>Surveillance ENT · Moodle · Réseau Campus · Wi-Fi Étudiants · Serveurs Pédagogiques</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="card stat-card">
+      <div class="stat-icon">🚨</div>
+      <div class="stat-label">Alertes Actives</div>
+      <div class="stat-value" style="color:#F87171">43</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:43%;background:var(--red)"></div></div>
+      <div class="stat-sub"><span class="dn">↑ +11</span> vs hier</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-icon">🔓</div>
+      <div class="stat-label">Incidents Non Résolus</div>
+      <div class="stat-value" style="color:#FCD34D">17</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:17%;background:var(--orange)"></div></div>
+      <div class="stat-sub"><span class="dn">↑ +4</span> depuis hier</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-icon">📋</div>
+      <div class="stat-label">Total Logs (24h)</div>
+      <div class="stat-value" style="color:var(--cyan)">2.4M</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:60%;background:var(--cyan)"></div></div>
+      <div class="stat-sub"><span class="up">↑ +380K</span> vs hier</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-label">Sessions Actives</div>
+      <div class="stat-value" style="color:var(--purple-light)">1,847</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:74%;background:var(--purple)"></div></div>
+      <div class="stat-sub"><span class="up">● Normal</span> max 2500</div>
+    </div>
+  </div>
+
+  <div class="g21">
+    <div class="card">
+      <div class="card-title">📈 Connexions Plateforme & Alertes – 24h</div>
+      <canvas id="lineChart" height="150"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">🎯 Répartition des Incidents</div>
+      <canvas id="donutChart" height="130"></canvas>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+        <span style="font-size:11px;color:#F87171">● Intrusion 18%</span>
+        <span style="font-size:11px;color:#FCD34D">● Auth 32%</span>
+        <span style="font-size:11px;color:var(--purple-light)">● Données 28%</span>
+        <span style="font-size:11px;color:#6EE7B7">● Réseau 22%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="card-title">🏛️ Incidents par Service ENSA</div>
+      <canvas id="barChart" height="155"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">⏰ Pic d'Activité Étudiants / Jour</div>
+      <canvas id="heatChart" height="155"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">📉 Incidents Ouverts vs Résolus – 7j</div>
+      <canvas id="incidentTrendChart" height="155"></canvas>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">🗂️ Incidents Non Résolus – Récents</div>
+      <table>
+        <thead><tr><th>ID</th><th>Type</th><th>Service</th><th>Sévérité</th><th>Statut</th></tr></thead>
+        <tbody>
+          <tr><td style="font-family:var(--mono);color:var(--muted)">#INC-221</td><td>Accès non autorisé</td><td>Moodle</td><td><span class="sev sc">● Critical</span></td><td style="color:var(--red);font-size:11px">⬤ Ouvert</td></tr>
+          <tr><td style="font-family:var(--mono);color:var(--muted)">#INC-220</td><td>Brute Force</td><td>ENT Login</td><td><span class="sev sc">● Critical</span></td><td style="color:var(--red);font-size:11px">⬤ Ouvert</td></tr>
+          <tr><td style="font-family:var(--mono);color:var(--muted)">#INC-219</td><td>Fuite données</td><td>Base Notes</td><td><span class="sev sh">● High</span></td><td style="color:var(--red);font-size:11px">⬤ Ouvert</td></tr>
+          <tr><td style="font-family:var(--mono);color:var(--muted)">#INC-218</td><td>Scan réseau</td><td>Wi-Fi Campus</td><td><span class="sev sh">● High</span></td><td style="color:var(--orange);font-size:11px">⬤ En cours</td></tr>
+          <tr><td style="font-family:var(--mono);color:var(--muted)">#INC-217</td><td>Upload suspect</td><td>Depot Fichiers</td><td><span class="sev sm">● Medium</span></td><td style="color:var(--orange);font-size:11px">⬤ En cours</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">📡 Activité Réseau par Zone Campus</div>
+      <div style="margin-top:4px;">
+        <div class="prog-item"><div class="prog-row"><span>Amphithéâtres A,B,C</span><span style="color:var(--cyan);font-family:var(--mono);font-size:11px">34%</span></div><div class="prog-bg"><div class="prog-fill" style="width:34%;background:var(--cyan)"></div></div></div>
+        <div class="prog-item"><div class="prog-row"><span>Salles TP Informatique</span><span style="color:var(--purple-light);font-family:var(--mono);font-size:11px">28%</span></div><div class="prog-bg"><div class="prog-fill" style="width:28%;background:var(--purple)"></div></div></div>
+        <div class="prog-item"><div class="prog-row"><span>Bibliothèque</span><span style="color:var(--green);font-family:var(--mono);font-size:11px">16%</span></div><div class="prog-bg"><div class="prog-fill" style="width:16%;background:var(--green)"></div></div></div>
+        <div class="prog-item"><div class="prog-row"><span>Résidence Étudiants</span><span style="color:var(--orange);font-family:var(--mono);font-size:11px">14%</span></div><div class="prog-bg"><div class="prog-fill" style="width:14%;background:var(--orange)"></div></div></div>
+        <div class="prog-item"><div class="prog-row"><span>Administration</span><span style="color:var(--muted);font-family:var(--mono);font-size:11px">8%</span></div><div class="prog-bg"><div class="prog-fill" style="width:8%;background:var(--muted)"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════
+     PAGE 2 – LOGS
+════════════════════════════════ -->
+<div class="page" id="page-logs">
+<div class="container">
+  <div class="page-header">
+    <div class="badge badge-purple">● SIEM CONNECTÉ – PLATEFORME ENSA</div>
+    <h1>Visualisation des Logs</h1>
+    <p>ENT · Moodle · Serveurs Pédagogiques · Réseau Wi-Fi Campus</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="card stat-card">
+      <div class="stat-icon">📦</div>
+      <div class="stat-label">Total Logs (24h)</div>
+      <div class="stat-value" style="font-size:22px;color:var(--cyan)">2.4M</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:70%;background:var(--cyan)"></div></div>
+      <div class="stat-sub">Normal: 2.27M · Critique: 130K</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-label">Logs Normaux</div>
+      <div class="stat-value" style="font-size:22px;color:var(--green)">2.27M</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:95%;background:var(--green)"></div></div>
+      <div class="stat-sub"><span class="up">94.6%</span> du total · sain</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-icon">🔴</div>
+      <div class="stat-label">Logs Critiques</div>
+      <div class="stat-value" style="font-size:22px;color:var(--red)">130K</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:5%;background:var(--red)"></div></div>
+      <div class="stat-sub"><span class="dn">5.4%</span> — attention requise</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-icon">🖥️</div>
+      <div class="stat-label">Services Indexés</div>
+      <div class="stat-value" style="font-size:22px;color:var(--purple-light)">12</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:80%;background:var(--purple)"></div></div>
+      <div class="stat-sub">Rétention 90 jours</div>
+    </div>
+  </div>
+
+  <div class="g21">
+    <div class="card">
+      <div class="card-title">📊 Volume Logs Normaux vs Critiques – 7j</div>
+      <canvas id="logVolumeChart" height="140"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">🏛️ Logs par Service Universitaire</div>
+      <div style="margin-top:4px;">
+        <div class="prog-item"><div class="prog-row"><span>Moodle (cours/devoirs)</span><span style="color:var(--cyan);font-family:var(--mono);font-size:11px">41%</span></div><div class="prog-bg"><div class="prog-fill" style="width:41%;background:var(--cyan)"></div></div></div>
+        <div class="prog-item"><div class="prog-row"><span>ENT (authentification)</span><span style="color:var(--purple-light);font-family:var(--mono);font-size:11px">27%</span></div><div class="prog-bg"><div class="prog-fill" style="width:27%;background:var(--purple)"></div></div></div>
+        <div class="prog-item"><div class="prog-row"><span>Wi-Fi Campus</span><span style="color:var(--green);font-family:var(--mono);font-size:11px">16%</span></div><div class="prog-bg"><div class="prog-fill" style="width:16%;background:var(--green)"></div></div></div>
+        <div class="prog-item"><div class="prog-row"><span>Serveur Notes / Scolarité</span><span style="color:var(--orange);font-family:var(--mono);font-size:11px">10%</span></div><div class="prog-bg"><div class="prog-fill" style="width:10%;background:var(--orange)"></div></div></div>
+        <div class="prog-item"><div class="prog-row"><span>Messagerie Académique</span><span style="color:var(--muted);font-family:var(--mono);font-size:11px">6%</span></div><div class="prog-bg"><div class="prog-fill" style="width:6%;background:var(--muted)"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">📉 Incidents Non Résolus – Évolution 30j</div>
+      <canvas id="openIncidentChart" height="140"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">🔀 Logs Normaux vs Critiques – 24h</div>
+      <canvas id="logRatioChart" height="140"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚡ Flux de Logs Temps Réel – ENSA</div>
+    <div class="log-toolbar">
+      <input type="text" class="search-box" placeholder="🔍  Filtrer... ex: service=moodle severity=critical user=etudiant" />
+      <button class="filter-btn active">Tous</button>
+      <button class="filter-btn">Critical</button>
+      <button class="filter-btn">Moodle</button>
+      <button class="filter-btn">ENT Auth</button>
+      <button class="filter-btn">Wi-Fi</button>
+      <button class="filter-btn">Scolarité</button>
+    </div>
+    <div style="background:rgba(0,0,0,0.25);border-radius:10px;overflow:hidden;border:1px solid var(--card-border);">
+      <div class="log-entry log-header"><span>Horodatage</span><span>Niveau</span><span>Message</span><span>Service / IP</span></div>
+      <div id="log-stream" style="max-height:380px;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════
+     PAGE 3 – ALERTES
+════════════════════════════════ -->
+<div class="page" id="page-alerts">
+<div class="container">
+  <div class="page-header">
+    <div class="badge badge-red">● 43 ALERTES · 17 NON RÉSOLUS</div>
+    <h1>Centre d'Alertes – Plateforme ENSA</h1>
+    <p>Triage · Escalade · Réponse aux incidents universitaires</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="card stat-card" style="border-top:2px solid var(--red)">
+      <div class="stat-label">🔴 Critical</div>
+      <div class="stat-value" style="font-size:26px;color:#F87171">5</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:100%;background:var(--red)"></div></div>
+      <div class="stat-sub">Réponse immédiate</div>
+    </div>
+    <div class="card stat-card" style="border-top:2px solid var(--orange)">
+      <div class="stat-label">🟡 High</div>
+      <div class="stat-value" style="font-size:26px;color:#FCD34D">12</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:55%;background:var(--orange)"></div></div>
+      <div class="stat-sub">Réponse &lt; 1h</div>
+    </div>
+    <div class="card stat-card" style="border-top:2px solid var(--purple)">
+      <div class="stat-label">🟣 Medium</div>
+      <div class="stat-value" style="font-size:26px;color:var(--purple-light)">18</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:75%;background:var(--purple)"></div></div>
+      <div class="stat-sub">Réponse &lt; 4h</div>
+    </div>
+    <div class="card stat-card" style="border-top:2px solid var(--green)">
+      <div class="stat-label">🟢 Low</div>
+      <div class="stat-value" style="font-size:26px;color:#6EE7B7">8</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:32%;background:var(--green)"></div></div>
+      <div class="stat-sub">Réponse &lt; 24h</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;position:relative;z-index:1;">
+    <div>
+      <div class="log-toolbar" style="margin-bottom:14px;">
+        <button class="filter-btn active">Toutes</button>
+        <button class="filter-btn">Critical</button>
+        <button class="filter-btn">Moodle</button>
+        <button class="filter-btn">ENT</button>
+        <button class="filter-btn">Non assignées</button>
+      </div>
+      <div class="alert-card critical"><div class="alert-icon critical">🔐</div><div><div class="alert-title">Accès non autorisé – Espace Prof Moodle</div><div class="alert-desc">Compte étudiant et102345 a accédé aux sujets d'examen verrouillés · Moodle</div></div><div class="alert-time">8 min</div><button class="alert-action">Bloquer →</button></div>
+      <div class="alert-card critical"><div class="alert-icon critical">🤖</div><div><div class="alert-title">Brute Force ENT – 8 200 tentatives</div><div class="alert-desc">IP: 197.8.14.33 · Cible: sso.ensa.ma · attaque automatisée</div></div><div class="alert-time">19 min</div><button class="alert-action">Bloquer →</button></div>
+      <div class="alert-card high"><div class="alert-icon high">📝</div><div><div class="alert-title">Modification Notes Suspecte – Base Scolarité</div><div class="alert-desc">admin_temp a modifié 14 notes sans validation hiérarchique · 10.0.1.5</div></div><div class="alert-time">34 min</div><button class="alert-action">Investiguer →</button></div>
+      <div class="alert-card high"><div class="alert-icon high">📤</div><div><div class="alert-title">Export Massif Données Étudiants</div><div class="alert-desc">3 400 fiches scolarité exportées en 2 min par <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="364345534418545358575a5f7653584557185b57">[email&#160;protected]</a></div></div><div class="alert-time">51 min</div><button class="alert-action">Révoquer →</button></div>
+      <div class="alert-card medium"><div class="alert-icon medium">📡</div><div><div class="alert-title">Scan Réseau – Salle TP Bloc C</div><div class="alert-desc">PC-TP-C14 effectue un scan SYN sur le sous-réseau 192.168.10.0/24</div></div><div class="alert-time">1h 02m</div><button class="alert-action">Analyser →</button></div>
+      <div class="alert-card medium"><div class="alert-icon medium">📁</div><div><div class="alert-title">Upload Fichier Suspect – Dépôt Devoirs</div><div class="alert-desc">Fichier .exe uploadé via depot-devoirs.ensa.ma par et209876</div></div><div class="alert-time">1h 28m</div><button class="alert-action">Quarantaine →</button></div>
+      <div class="alert-card low"><div class="alert-icon low">🕒</div><div><div class="alert-title">Connexion Hors-Plage – Compte Professeur</div><div class="alert-desc"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6212100d044c1003010a0b060b22070c11034c0f03">[email&#160;protected]</a> connecté à 03h12 depuis IP inconnue</div></div><div class="alert-time">2h 10m</div><button class="alert-action">Vérifier →</button></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-title">📊 Alertes par Heure – 12h</div>
+        <canvas id="alertChart" height="130"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title">🕐 Chronologie des Événements</div>
+        <div class="timeline">
+          <div class="tl-item"><div class="tl-dot red"></div><div class="tl-title">Accès non autorisé Moodle</div><div class="tl-time">18:13:42 · CRITICAL</div></div>
+          <div class="tl-item"><div class="tl-dot red"></div><div class="tl-title">Brute Force ENT SSO</div><div class="tl-time">18:02:17 · CRITICAL</div></div>
+          <div class="tl-item"><div class="tl-dot orange"></div><div class="tl-title">Modif. Notes Scolarité</div><div class="tl-time">17:47:55 · HIGH</div></div>
+          <div class="tl-item"><div class="tl-dot orange"></div><div class="tl-title">Export massif données</div><div class="tl-time">17:30:11 · HIGH</div></div>
+          <div class="tl-item"><div class="tl-dot purple"></div><div class="tl-title">Scan Réseau Bloc C</div><div class="tl-time">17:19:04 · MEDIUM</div></div>
+          <div class="tl-item"><div class="tl-dot purple"></div><div class="tl-title">Upload .exe Dépôt Devoirs</div><div class="tl-time">16:53:22 · MEDIUM</div></div>
+          <div class="tl-item"><div class="tl-dot green"></div><div class="tl-title">Connexion hors-plage Prof</div><div class="tl-time">16:11:08 · LOW</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════
+     PAGE 4 – EXPORT CSV
+════════════════════════════════ -->
+<div class="page" id="page-export">
+<div class="container">
+  <div class="page-header">
+    <div class="badge badge-green">● EXPORT & RAPPORTS</div>
+    <h1>Export CSV – Rapport Journalier SOC</h1>
+    <p>Exportez l'activité de la journée en fichiers CSV structurés pour archivage, audit ou analyse externe</p>
+  </div>
+
+  <!-- EXPORT PANEL -->
+  <div class="export-panel">
+    <div class="export-panel-title">📤 Sélectionner les données à exporter</div>
+    <div class="export-panel-sub">Choisissez les sections, la plage horaire et le format, puis lancez l'export.</div>
+
+    <!-- CHECKBOXES -->
+    <div class="export-grid">
+      <label class="export-item">
+        <div class="export-item-header"><span class="export-item-name">🚨 Alertes du jour</span><input type="checkbox" id="cb-alerts" checked></div>
+        <div class="export-item-desc">Toutes les alertes générées · sévérité · statut · responsable</div>
+        <div class="export-item-count">43 alertes · ~12 Ko</div>
+      </label>
+      <label class="export-item">
+        <div class="export-item-header"><span class="export-item-name">📋 Logs Critiques</span><input type="checkbox" id="cb-logs-crit" checked></div>
+        <div class="export-item-desc">Logs de niveau CRITICAL et HIGH uniquement</div>
+        <div class="export-item-count">130K entrées · ~48 Mo</div>
+      </label>
+      <label class="export-item">
+        <div class="export-item-header"><span class="export-item-name">📦 Tous les Logs</span><input type="checkbox" id="cb-logs-all"></div>
+        <div class="export-item-desc">Ensemble complet des logs (normaux + critiques)</div>
+        <div class="export-item-count">2.4M entrées · ~920 Mo</div>
+      </label>
+      <label class="export-item">
+        <div class="export-item-header"><span class="export-item-name">🔓 Incidents Non Résolus</span><input type="checkbox" id="cb-incidents" checked></div>
+        <div class="export-item-desc">Liste des incidents ouverts + historique des actions</div>
+        <div class="export-item-count">17 incidents · ~8 Ko</div>
+      </label>
+      <label class="export-item">
+        <div class="export-item-header"><span class="export-item-name">👥 Sessions Utilisateurs</span><input type="checkbox" id="cb-sessions"></div>
+        <div class="export-item-desc">Connexions ENT / Moodle · horodatage · IP · durée</div>
+        <div class="export-item-count">8 420 sessions · ~3.2 Mo</div>
+      </label>
+      <label class="export-item">
+        <div class="export-item-header"><span class="export-item-name">📡 Trafic Réseau Campus</span><input type="checkbox" id="cb-network"></div>
+        <div class="export-item-desc">Flux réseau par zone · bande passante · anomalies</div>
+        <div class="export-item-count">statistiques 24h · ~1.8 Mo</div>
+      </label>
+      <label class="export-item">
+        <div class="export-item-header"><span class="export-item-name">🎓 Activité Moodle</span><input type="checkbox" id="cb-moodle" checked></div>
+        <div class="export-item-desc">Connexions cours · soumissions devoirs · téléchargements</div>
+        <div class="export-item-count">24 340 actions · ~9 Mo</div>
+      </label>
+      <label class="export-item">
+        <div class="export-item-header"><span class="export-item-name">📝 Rapport Résumé SOC</span><input type="checkbox" id="cb-summary" checked></div>
+        <div class="export-item-desc">Synthèse journalière · métriques clés · recommandations</div>
+        <div class="export-item-count">Rapport auto-généré · ~4 Ko</div>
+      </label>
+      <label class="export-item">
+        <div class="export-item-header"><span class="export-item-name">🔐 Tentatives Auth Échouées</span><input type="checkbox" id="cb-auth"></div>
+        <div class="export-item-desc">Échecs de connexion · IPs · comptes ciblés · fréquence</div>
+        <div class="export-item-count">2 847 tentatives · ~1.1 Mo</div>
+      </label>
+    </div>
+
+    <!-- OPTIONS -->
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">⚙️ Options d'export</div>
+    <div class="export-options">
+      <label>Plage horaire
+        <select id="sel-range">
+          <option>Aujourd'hui (00h – maintenant)</option>
+          <option>Dernières 6 heures</option>
+          <option>Dernières 12 heures</option>
+          <option>Hier (24h complètes)</option>
+          <option>7 derniers jours</option>
+          <option>Personnalisé...</option>
+        </select>
+      </label>
+      <label>Encodage
+        <select id="sel-enc">
+          <option>UTF-8</option>
+          <option>UTF-16</option>
+          <option>ISO-8859-1</option>
+        </select>
+      </label>
+      <label>Séparateur
+        <select id="sel-sep">
+          <option value=",">Virgule ( , )</option>
+          <option value=";">Point-virgule ( ; )</option>
+          <option value="	">Tabulation</option>
+        </select>
+      </label>
+      <label>Compression
+        <select id="sel-zip">
+          <option>Aucune (CSV brut)</option>
+          <option>ZIP</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="export-actions">
+      <button class="btn-export" onclick="runExport()">📥 Lancer l'export CSV</button>
+      <button class="btn-preview" onclick="previewExport()">👁 Aperçu données</button>
+      <span style="font-size:11px;color:var(--muted);margin-left:8px;" id="export-size-hint">Taille estimée : 73 Ko sélectionnés</span>
+    </div>
+  </div>
+
+  <!-- EXPORT LOG -->
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">📜 Journal des Exports</div>
+      <div class="export-log" id="export-log">
+        <div><span class="ok">✓</span> [18:10:02] Export alertes_2026-02-18.csv — 43 lignes — OK</div>
+        <div><span class="ok">✓</span> [17:55:14] Export incidents_non_resolus_2026-02-18.csv — 17 lignes — OK</div>
+        <div><span class="ok">✓</span> [17:55:14] Export rapport_soc_2026-02-18.csv — résumé 24h — OK</div>
+        <div><span class="ok">✓</span> [14:30:07] Export logs_critiques_2026-02-18_14h.csv — 98K lignes — OK</div>
+        <div><span class="info">ℹ</span> [12:00:00] Export auto planifié — rapport_midi — déclenché</div>
+        <div><span class="ok">✓</span> [11:59:58] Export moodle_activite_2026-02-18_matin.csv — 11K lignes — OK</div>
+        <div><span class="warn">⚠</span> [09:15:33] Export logs_all annulé — taille > 900 Mo, confirmation requise</div>
+        <div><span class="ok">✓</span> [08:01:00] Export auto planifié — rapport_nuit — OK</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Exports par Type – Cette Semaine</div>
+      <canvas id="exportChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- PREVIEW TABLE -->
+  <div class="card" id="preview-section" style="display:none;">
+    <div class="card-title">👁 Aperçu – alertes_2026-02-18.csv</div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr><th>timestamp</th><th>id_incident</th><th>type</th><th>service</th><th>severite</th><th>statut</th><th>source_ip</th><th>utilisateur</th><th>description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td style="font-family:var(--mono);font-size:10px">2026-02-18 18:13:42</td><td style="font-family:var(--mono)">#INC-221</td><td>Accès non autorisé</td><td>Moodle</td><td><span class="sev sc">CRITICAL</span></td><td style="color:var(--red)">Ouvert</td><td style="font-family:var(--mono);font-size:10px">10.0.3.44</td><td>et102345</td><td style="color:var(--muted);font-size:11px">Accès espace prof non autorisé</td></tr>
+          <tr><td style="font-family:var(--mono);font-size:10px">2026-02-18 18:02:17</td><td style="font-family:var(--mono)">#INC-220</td><td>Brute Force</td><td>ENT SSO</td><td><span class="sev sc">CRITICAL</span></td><td style="color:var(--red)">Ouvert</td><td style="font-family:var(--mono);font-size:10px">197.8.14.33</td><td>—</td><td style="color:var(--muted);font-size:11px">8200 tentatives login automatisées</td></tr>
+          <tr><td style="font-family:var(--mono);font-size:10px">2026-02-18 17:47:55</td><td style="font-family:var(--mono)">#INC-219</td><td>Modif. Notes</td><td>Scolarité</td><td><span class="sev sh">HIGH</span></td><td style="color:var(--red)">Ouvert</td><td style="font-family:var(--mono);font-size:10px">10.0.1.5</td><td>admin_temp</td><td style="color:var(--muted);font-size:11px">14 notes modifiées sans validation</td></tr>
+          <tr><td style="font-family:var(--mono);font-size:10px">2026-02-18 17:30:11</td><td style="font-family:var(--mono)">#INC-218</td><td>Export Données</td><td>Scolarité</td><td><span class="sev sh">HIGH</span></td><td style="color:var(--orange)">En cours</td><td style="font-family:var(--mono);font-size:10px">10.0.2.18</td><td>user.benali</td><td style="color:var(--muted);font-size:11px">3400 fiches exportées en 2 min</td></tr>
+          <tr><td style="font-family:var(--mono);font-size:10px">2026-02-18 17:19:04</td><td style="font-family:var(--mono)">#INC-217</td><td>Scan Réseau</td><td>Wi-Fi Bloc C</td><td><span class="sev sm">MEDIUM</span></td><td style="color:var(--orange)">En cours</td><td style="font-family:var(--mono);font-size:10px">192.168.10.14</td><td>PC-TP-C14</td><td style="color:var(--muted);font-size:11px">Scan SYN /24 détecté</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--muted)">Affichage des 5 premières lignes sur 43 · Format: CSV UTF-8 · Séparateur: virgule</div>
+  </div>
+
+</div>
+</div>
+
+</div><!-- /main -->
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// Clock
+function tick(){const n=new Date(),p=x=>String(x).padStart(2,'0');document.getElementById('clock').textContent=`${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())} ${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())} GMT+1`;}
+tick();setInterval(tick,1000);
+
+// Nav
+const titles={dashboard:'Dashboard – Vue d\'ensemble ENSA',logs:'Visualisation des Logs – ENSA',alerts:'Centre d\'Alertes – ENSA',export:'Export CSV – Rapport Journalier SOC'};
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-link').forEach(a=>a.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  document.getElementById('topbar-title').textContent=titles[id]||'';
+}
+
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn=>{btn.addEventListener('click',function(){this.closest('.log-toolbar').querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');});});
+
+// Chart defaults
+Chart.defaults.color='#64748B';
+Chart.defaults.borderColor='rgba(255,255,255,0.055)';
+Chart.defaults.font.family="'Space Grotesk',sans-serif";
+Chart.defaults.font.size=11;
+const h24=Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}h`);
+const co={grid:{color:'rgba(255,255,255,0.04)'}};
+
+// 1. Line: connexions + alertes
+new Chart('lineChart',{type:'line',data:{labels:h24,datasets:[
+  {label:'Connexions ENSA',data:[120,80,40,20,15,30,180,820,1400,1650,1800,1700,1400,1600,1550,1400,1500,1847,1700,1550,1300,900,550,280],borderColor:'#7C5CFC',backgroundColor:'rgba(124,92,252,0.07)',fill:true,tension:.4,borderWidth:2,pointRadius:0},
+  {label:'Alertes',data:[0,0,0,0,0,1,2,5,8,10,12,9,7,9,8,6,8,12,15,11,8,5,3,1],borderColor:'#EF4444',backgroundColor:'rgba(239,68,68,0.05)',fill:true,tension:.4,borderWidth:1.5,pointRadius:0,yAxisID:'y2'}
+]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:9}}},scales:{y:co,y2:{position:'right',grid:{display:false}}}}});
+
+// 2. Donut incidents
+new Chart('donutChart',{type:'doughnut',data:{labels:['Intrusion','Auth','Données','Réseau'],datasets:[{data:[18,32,28,22],backgroundColor:['rgba(239,68,68,.8)','rgba(245,158,11,.8)','rgba(124,92,252,.8)','rgba(16,185,129,.8)'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,cutout:'72%',plugins:{legend:{display:false}}}});
+
+// 3. Bar: incidents par service
+new Chart('barChart',{type:'bar',data:{labels:['Moodle','ENT / SSO','Scolarité','Wi-Fi','Messagerie','Dépôt','Admin'],datasets:[{label:'Incidents',data:[14,10,8,5,3,2,1],backgroundColor:['rgba(239,68,68,.7)','rgba(245,158,11,.7)','rgba(124,92,252,.6)','rgba(34,211,238,.5)','rgba(16,185,129,.5)','rgba(245,158,11,.4)','rgba(124,92,252,.4)'],borderRadius:5}]},options:{responsive:true,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:co}}});
+
+// 4. Line: pic activité par heure
+new Chart('heatChart',{type:'line',data:{labels:h24,datasets:[{label:'Sessions actives',data:[60,30,15,8,5,20,180,900,1550,1700,1800,1650,1200,1500,1400,1380,1500,1847,1650,1400,1100,750,450,200],borderColor:'#22D3EE',backgroundColor:'rgba(34,211,238,0.08)',fill:true,tension:.4,borderWidth:2,pointRadius:0}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:co}}});
+
+// 5. Bar: incidents ouverts vs résolus
+new Chart('incidentTrendChart',{type:'bar',data:{labels:['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'],datasets:[{label:'Ouverts',data:[8,12,15,10,18,14,17],backgroundColor:'rgba(239,68,68,0.65)',borderRadius:5},{label:'Résolus',data:[6,10,12,9,14,11,9],backgroundColor:'rgba(16,185,129,0.5)',borderRadius:5}]},options:{responsive:true,plugins:{legend:{position:'top',labels:{boxWidth:9}}},scales:{y:co}}});
+
+// 6. Bar: log volume 7j
+new Chart('logVolumeChart',{type:'bar',data:{labels:['J-6','J-5','J-4','J-3','J-2','Hier','Auj.'],datasets:[{label:'Normaux (M)',data:[1.9,2.1,1.8,2.3,2.0,2.2,2.27],backgroundColor:'rgba(16,185,129,0.55)',borderRadius:5},{label:'Critiques (K)',data:[80,95,72,110,88,118,130],backgroundColor:'rgba(239,68,68,0.65)',borderRadius:5,yAxisID:'y2'}]},options:{responsive:true,plugins:{legend:{position:'top',labels:{boxWidth:9}}},scales:{y:co,y2:{position:'right',grid:{display:false}}}}});
+
+// 7. Line: incidents ouverts 30j
+const d30=Array.from({length:30},(_,i)=>`J${i+1}`);
+new Chart('openIncidentChart',{type:'line',data:{labels:d30,datasets:[{label:'Incidents ouverts',data:[3,5,7,6,9,11,10,13,15,14,12,16,14,17,15,18,16,14,17,19,16,18,15,17,20,18,16,19,17,17],borderColor:'#EF4444',backgroundColor:'rgba(239,68,68,0.08)',fill:true,tension:.4,borderWidth:2,pointRadius:0}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:co}}});
+
+// 8. Line: logs normaux vs critiques 24h
+new Chart('logRatioChart',{type:'line',data:{labels:h24,datasets:[
+  {label:'Normaux',data:[2200,1500,800,400,300,600,18000,85000,155000,172000,185000,168000,145000,160000,152000,140000,152000,185000,172000,155000,130000,90000,55000,28000],borderColor:'#10B981',backgroundColor:'rgba(16,185,129,0.07)',fill:true,tension:.4,borderWidth:2,pointRadius:0},
+  {label:'Critiques',data:[0,0,0,0,0,120,400,900,2100,4500,6200,5800,4800,5400,5100,4200,5000,6400,5800,4900,3800,2200,1100,400],borderColor:'#EF4444',backgroundColor:'rgba(239,68,68,0.05)',fill:true,tension:.4,borderWidth:1.5,pointRadius:0,yAxisID:'y2'}
+]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:9}}},scales:{y:co,y2:{position:'right',grid:{display:false}}}}});
+
+// 9. Bar: alertes par heure
+new Chart('alertChart',{type:'bar',data:{labels:['07h','08h','09h','10h','11h','12h','13h','14h','15h','16h','17h','18h'],datasets:[{label:'Critical',data:[0,1,2,3,2,1,1,2,1,2,3,5],backgroundColor:'rgba(239,68,68,0.7)',borderRadius:3},{label:'High',data:[0,2,3,4,3,2,2,3,2,3,4,7],backgroundColor:'rgba(245,158,11,0.5)',borderRadius:3}]},options:{responsive:true,plugins:{legend:{position:'top',labels:{boxWidth:8}}},scales:{x:{stacked:true},y:{stacked:true,...co}}}});
+
+// 10. Export chart
+new Chart('exportChart',{type:'bar',data:{labels:['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'],datasets:[{label:'Alertes',data:[3,4,2,5,3,2,4],backgroundColor:'rgba(239,68,68,0.6)',borderRadius:4},{label:'Logs Critiques',data:[2,3,2,4,3,1,3],backgroundColor:'rgba(245,158,11,0.5)',borderRadius:4},{label:'Incidents',data:[2,2,1,3,2,1,2],backgroundColor:'rgba(124,92,252,0.5)',borderRadius:4},{label:'Moodle',data:[1,2,1,2,1,0,1],backgroundColor:'rgba(16,185,129,0.5)',borderRadius:4}]},options:{responsive:true,plugins:{legend:{position:'top',labels:{boxWidth:9}}},scales:{x:{stacked:true},y:{stacked:true,...co}}}});
+
+// Logs
+const logData=[
+  {time:'18:21:44',level:'CRITICAL',msg:'Accès non autorisé – espace professeur Moodle · et102345',src:'Moodle · 10.0.3.44',cls:'sc'},
+  {time:'18:21:39',level:'CRITICAL',msg:'Brute Force ENT SSO – 8200 tentatives en 12 min',src:'ENT · 197.8.14.33',cls:'sc'},
+  {time:'18:21:30',level:'HIGH',msg:'Modification notes suspecte – 14 notes sans validation',src:'Scolarité · 10.0.1.5',cls:'sh'},
+  {time:'18:21:22',level:'HIGH',msg:'Export massif – 3400 fiches scolarité en 2 min',src:'Scolarité · 10.0.2.18',cls:'sh'},
+  {time:'18:21:15',level:'NORMAL',msg:'Session Moodle – login réussi · et305421 · cours SI',src:'Moodle · 10.0.3.12',cls:'si'},
+  {time:'18:21:10',level:'MEDIUM',msg:'Scan SYN détecté – 192.168.10.0/24 depuis PC-TP-C14',src:'Wi-Fi · 192.168.10.14',cls:'sm'},
+  {time:'18:21:05',level:'MEDIUM',msg:'Upload fichier .exe – depot-devoirs.ensa.ma · et209876',src:'Dépôt · 10.0.4.8',cls:'sm'},
+  {time:'18:21:00',level:'NORMAL',msg:'Soumission devoir – Algo2 · et411233 · dans les délais',src:'Moodle · 10.0.3.55',cls:'si'},
+  {time:'18:20:55',level:'LOW',msg:'Connexion hors-plage – prof.rachidi@ensa.ma · 03h12',src:'ENT · 41.250.14.7',cls:'sl'},
+  {time:'18:20:50',level:'NORMAL',msg:'Mise à jour cours – Dr. Amrani · cours Réseaux S6',src:'Moodle · 10.0.1.20',cls:'si'},
+  {time:'18:20:45',level:'NORMAL',msg:'Nouvelle inscription – et512088 · module Base de Données',src:'ENT · 10.0.2.44',cls:'si'},
+  {time:'18:20:40',level:'HIGH',msg:'Tentatives login échouées – 45 en 5 min · admin_tmp',src:'ENT · 10.0.0.99',cls:'sh'},
+  {time:'18:20:35',level:'NORMAL',msg:'Wi-Fi connecté – 847 appareils · Amphi A · normal',src:'Wi-Fi · AP-AMPHI-A',cls:'si'},
+  {time:'18:20:30',level:'MEDIUM',msg:'Téléchargement massif – 340 fichiers PDF en 3 min',src:'Moodle · 10.0.3.77',cls:'sm'},
+  {time:'18:20:25',level:'NORMAL',msg:'Backup base scolarité – planifié · réussi · 4.2 Go',src:'Scolarité · SRV-DB-01',cls:'si'},
+  {time:'18:20:20',level:'LOW',msg:'Certificat SSL expirant – messagerie.ensa.ma · 7 jours',src:'Messagerie · SRV-MAIL',cls:'sl'},
+  {time:'18:20:15',level:'NORMAL',msg:'Résultats examens publiés – S3 · 245 étudiants notifiés',src:'Scolarité · 10.0.1.3',cls:'si'},
+  {time:'18:20:10',level:'CRITICAL',msg:'Connexion depuis pays inconnu – compte prof.bennis · CN',src:'ENT · 112.96.14.202',cls:'sc'},
+];
+const stream=document.getElementById('log-stream');
+logData.forEach(l=>{
+  const el=document.createElement('div');
+  el.className='log-entry';
+  el.innerHTML=`<span class="log-time">${l.time}</span><span class="sev ${l.cls}">${l.level}</span><span class="log-msg">${l.msg}</span><span class="log-src">${l.src}</span>`;
+  stream.appendChild(el);
+});
+
+// ── Export size hint dynamique ──
+function updateSizeHint(){
+  const sizes={alerts:12,logsCrit:49152,logsAll:942080,incidents:8,sessions:3277,network:1843,moodle:9216,summary:4,auth:1126};
+  const map={cb-alerts:'alerts','cb-logs-crit':'logsCrit','cb-logs-all':'logsAll','cb-incidents':'incidents','cb-sessions':'sessions','cb-network':'network','cb-moodle':'moodle','cb-summary':'summary','cb-auth':'auth'};
+  let total=0;
+  Object.entries(map).forEach(([id,key])=>{const cb=document.getElementById(id);if(cb&&cb.checked)total+=sizes[key]||0;});
+  let label=total<1024?`${total} Ko`:total<1048576?`${(total/1024).toFixed(1)} Mo`:`${(total/1048576).toFixed(2)} Go`;
+  document.getElementById('export-size-hint').textContent=`Taille estimée : ${label} sélectionnés`;
+}
+document.querySelectorAll('[id^="cb-"]').forEach(cb=>cb.addEventListener('change',updateSizeHint));
+updateSizeHint();
+
+// ── Preview ──
+function previewExport(){
+  const s=document.getElementById('preview-section');
+  s.style.display=s.style.display==='none'?'block':'none';
+}
+
+// ── Toast ──
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ── Run Export ──
+function runExport(){
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const dateStr=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const timeStr=`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const sep=document.getElementById('sel-sep').value||',';
+
+  const exportConfigs=[
+    {cb:'cb-alerts',name:`alertes_${dateStr}.csv`,headers:['timestamp','id_incident','type','service','severite','statut','source_ip','utilisateur','description'],
+     rows:[
+       [`2026-02-18 18:13:42`,'#INC-221','Accès non autorisé','Moodle','CRITICAL','Ouvert','10.0.3.44','et102345','Accès espace prof non autorisé'],
+       [`2026-02-18 18:02:17`,'#INC-220','Brute Force','ENT SSO','CRITICAL','Ouvert','197.8.14.33','—','8200 tentatives automatisées'],
+       [`2026-02-18 17:47:55`,'#INC-219','Modification Notes','Scolarité','HIGH','Ouvert','10.0.1.5','admin_temp','14 notes modifiées sans validation'],
+       [`2026-02-18 17:30:11`,'#INC-218','Export Données','Scolarité','HIGH','En cours','10.0.2.18','user.benali','3400 fiches exportées en 2 min'],
+       [`2026-02-18 17:19:04`,'#INC-217','Scan Réseau','Wi-Fi Bloc C','MEDIUM','En cours','192.168.10.14','PC-TP-C14','Scan SYN /24 détecté'],
+     ]},
+    {cb:'cb-incidents',name:`incidents_non_resolus_${dateStr}.csv`,headers:['timestamp','id','type','service','severite','statut','responsable','duree_ouvert'],
+     rows:[
+       ['2026-02-18 18:13:42','#INC-221','Accès non autorisé','Moodle','CRITICAL','Ouvert','Admin SOC','8 min'],
+       ['2026-02-18 18:02:17','#INC-220','Brute Force','ENT SSO','CRITICAL','Ouvert','Admin SOC','19 min'],
+       ['2026-02-18 17:47:55','#INC-219','Modification Notes','Scolarité','HIGH','Ouvert','Non assigné','34 min'],
+     ]},
+    {cb:'cb-moodle',name:`moodle_activite_${dateStr}.csv`,headers:['timestamp','etudiant_id','action','cours','module','ip','duree_s'],
+     rows:[
+       ['2026-02-18 18:21:00','et411233','soumission_devoir','Algorithmique 2','Devoir3','10.0.3.55','—'],
+       ['2026-02-18 18:21:15','et305421','connexion_cours','Systèmes Info','—','10.0.3.12','—'],
+       ['2026-02-18 18:20:30','et199002','telechargement_pdf','Reseaux S6','Cours5','10.0.3.77','—'],
+     ]},
+    {cb:'cb-summary',name:`rapport_soc_${dateStr}.csv`,headers:['metrique','valeur','evolution','periode'],
+     rows:[
+       ['Alertes totales','43','+11 vs hier','2026-02-18'],
+       ['Incidents non résolus','17','+4 vs hier','2026-02-18'],
+       ['Total Logs','2 400 000','+380K vs hier','2026-02-18'],
+       ['Logs Normaux','2 270 000','94.6%','2026-02-18'],
+       ['Logs Critiques','130 000','5.4%','2026-02-18'],
+       ['Sessions actives max','1847','—','2026-02-18'],
+     ]},
+    {cb:'cb-logs-crit',name:`logs_critiques_${dateStr}.csv`,headers:['timestamp','niveau','message','service','ip'],
+     rows:logData.filter(l=>['CRITICAL','HIGH'].includes(l.level)).map(l=>[l.time,l.level,l.msg,l.src.split('·')[0].trim(),l.src.split('·')[1]?.trim()||'—'])},
+    {cb:'cb-auth',name:`tentatives_auth_${dateStr}.csv`,headers:['timestamp','ip_source','compte_cible','service','nb_tentatives','resultat'],
+     rows:[
+       ['2026-02-18 18:02:17','197.8.14.33','—','ENT SSO','8200','BLOQUE'],
+       ['2026-02-18 18:20:40','10.0.0.99','admin_tmp','ENT','45','ALERTE'],
+       ['2026-02-18 16:45:11','41.250.14.7','prof.rachidi','ENT','3','ECHEC'],
+     ]},
+  ];
+
+  let exported=0;
+  const logEl=document.getElementById('export-log');
+
+  exportConfigs.forEach(cfg=>{
+    const cb=document.getElementById(cfg.cb);
+    if(!cb||!cb.checked)return;
+    exported++;
+    const csvContent=[cfg.headers.join(sep),...cfg.rows.map(r=>r.map(v=>`"${v}"`).join(sep))].join('\n');
+    const blob=new Blob(['\uFEFF'+csvContent],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=cfg.name;a.click();
+    URL.revokeObjectURL(url);
+    const line=document.createEl
